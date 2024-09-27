@@ -1,6 +1,7 @@
 from PyQt6 import QtCore
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import QThread
+from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 class IspaceController(QThread):
@@ -55,3 +56,44 @@ class IspaceController(QThread):
         pixmap = QPixmap()
         pixmap.loadFromData(QtCore.QByteArray(screenshot_generator))
         self.pixmap_ready.emit(pixmap)
+
+    def click_automation(self, start_date, floor, suspend_all, room_1, room_2, checkedDate_list,suspend_reason):
+        
+        self.page.frame_locator('#contentframe').frame_locator('#iframePage').get_by_title('新增暫停使用空間').click()
+
+        try:
+            self.page.frame_locator('#contentframe').locator('#floor').select_option(floor)
+            self.page.wait_for_timeout(500)
+                
+            if suspend_all:
+                self.page.frame_locator('#contentframe').locator('label.chkboxAll').set_checked(True)
+            elif room_1:
+                self.page.frame_locator('#contentframe').locator('label.chksel').nth(0).set_checked(True)
+            elif room_2:
+                self.page.frame_locator('#contentframe').locator('label.chksel').nth(1).set_checked(True)
+            
+            self.page.frame_locator('#contentframe').locator('input.YYYYMMDD').click()
+
+            date = datetime.strptime(start_date.toString('yyyy/MM'), "%Y/%m")
+            calender_date = datetime.strptime(
+                self.page.frame_locator('#contentframe').locator('div.nav').locator('a.yyyymmdd').inner_html(), "%Y/%m")
+            diff = (date.year - calender_date.year) * 12 + (date.month - calender_date.month)
+                
+            if diff != 0:
+                for i in range(diff):
+                    self.page.frame_locator('#contentframe').locator('div.nav').locator('a.monthR').click()
+            
+            self.page.frame_locator('#contentframe').locator('div.calendar').get_by_title(start_date.toString('yyyy/MM/d'), exact=True).click()#.locator('table.calendar').click()
+            self.page.frame_locator('#contentframe').locator('input.textNeed').nth(1).clear()
+            self.page.frame_locator('#contentframe').locator('input.textNeed').nth(1).fill(suspend_reason)
+
+
+            if len(checkedDate_list) == 0:
+                self.page.frame_locator('#contentframe').locator('div.pagefun').nth(0).get_by_title('新增暫停使用空間').click()
+            else:
+                for time in checkedDate_list:
+                    self.page.frame_locator('#contentframe').get_by_text(time).click()
+                self.page.frame_locator('#contentframe').locator('div.pagefun').nth(0).get_by_title('新增暫停使用空間').click()
+
+        except:
+            pass

@@ -1,10 +1,7 @@
-import asyncio
 import sys
-from datetime import datetime, timedelta
-from PyQt6 import QtWidgets, QtCore, QtGui
+from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import QThread
-from playwright.sync_api import sync_playwright
 from iSpaceController import IspaceController
 from iSpaceSettingPage import ISpaceSettingPage
 
@@ -36,12 +33,14 @@ class ISpaceLoginPage(QtWidgets.QWidget):
         info_style = '''
             border: None;
             text-align: end;
+            color: black;
         '''
 
         input_bar_style = '''
             border: 1px solid black;
             border-radius: 10px;
             padding-right: 50px;
+            color: black;
         '''
 
         captcha_style = '''
@@ -56,9 +55,9 @@ class ISpaceLoginPage(QtWidgets.QWidget):
         self.userID = QtWidgets.QLabel(self)
         self.password = QtWidgets.QLabel(self)
         self.captcha = QtWidgets.QLabel(self)
-        self.userID.setText("User ID: ")
-        self.password.setText("Password: ")
-        self.captcha.setText("Verification Code: ")
+        self.userID.setText("登入賬號: ")
+        self.password.setText("登入密碼: ")
+        self.captcha.setText("認證文字: ")
         self.userID.setStyleSheet(info_style)
         self.password.setStyleSheet(info_style)
         self.captcha.setStyleSheet(info_style)
@@ -69,7 +68,7 @@ class ISpaceLoginPage(QtWidgets.QWidget):
         self.captchaInput = QtWidgets.QLineEdit(self)
         self.image_label = QtWidgets.QLabel(self)
         self.loginButton = QtWidgets.QPushButton(self)
-        self.loginButton.setText("Login")
+        self.loginButton.setText("登入")
         self.idInput.setStyleSheet(input_bar_style)
         self.pwInput.setStyleSheet(input_bar_style)
         self.captchaInput.setStyleSheet(input_bar_style)
@@ -111,7 +110,7 @@ class ISpaceLoginPage(QtWidgets.QWidget):
         
         # self.grid_layout.deleteLater()
         # self.deleteLater()
-        self.setting_window = ISpaceSettingPage(self.controller.page)
+        self.setting_window = ISpaceSettingPage(self.controller)
         self.setting_window.show()
 
         self.close()
