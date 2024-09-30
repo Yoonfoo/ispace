@@ -9,9 +9,13 @@ class IspaceController(QThread):
     pixmap_ready = QtCore.pyqtSignal(QPixmap)
     clear_widget = QtCore.pyqtSignal()
 
+    ### #################################################################################
+
     def __init__(self):
         super().__init__()
         self.page = None
+
+    ### #################################################################################
 
     def capture_login_page(self):
         p = sync_playwright().start()
@@ -28,6 +32,8 @@ class IspaceController(QThread):
         screenshot = page.screenshot(clip=clip_area)
         self.page = page
         return screenshot
+    
+    ### #################################################################################
 
     def on_login_button_clicked(self, userID, pwd, vc):
         # Fetch text from input fields and call the do_setting method
@@ -46,10 +52,10 @@ class IspaceController(QThread):
             return
         else:
             self.clear_widget.emit()
-            self.page.frame_locator('#mainframe').get_by_title('空間管理').click()
-            self.page.frame_locator('#subframe').get_by_title('小型討論室').click()
-            self.page.frame_locator('#subframe').get_by_title('討論室暫停使用列表').first.click()        
+            self.page.frame_locator('#mainframe').get_by_title('空間管理').click()      
     
+    ### #################################################################################
+
     def display_screenshot(self):
         screenshot_generator = self.capture_login_page()
 
@@ -57,8 +63,18 @@ class IspaceController(QThread):
         pixmap.loadFromData(QtCore.QByteArray(screenshot_generator))
         self.pixmap_ready.emit(pixmap)
 
-    def click_automation(self, start_date, floor, suspend_all, room_1, room_2, checkedDate_list,suspend_reason):
+    ### #################################################################################
+
+    def click_automation(self, start_date, floor, suspend_all, room_1, room_2, room_3, checkedDate_list,suspend_reason):
         
+        if(floor in ['圖書館1F', '圖書館6F', '圖書館7F', '圖書館8F']):
+            self.page.frame_locator('#subframe').get_by_title('小型討論室').click()
+            self.page.frame_locator('#subframe').get_by_title('討論室暫停使用列表').first.click()
+
+        else:
+            self.page.frame_locator('#subframe').get_by_title('大型討論室').click()
+            self.page.frame_locator('#subframe').get_by_title('討論室暫停使用列表').nth(1).click()
+
         self.page.frame_locator('#contentframe').frame_locator('#iframePage').get_by_title('新增暫停使用空間').click()
 
         try:
@@ -67,10 +83,14 @@ class IspaceController(QThread):
                 
             if suspend_all:
                 self.page.frame_locator('#contentframe').locator('label.chkboxAll').set_checked(True)
-            elif room_1:
-                self.page.frame_locator('#contentframe').locator('label.chksel').nth(0).set_checked(True)
-            elif room_2:
-                self.page.frame_locator('#contentframe').locator('label.chksel').nth(1).set_checked(True)
+
+            else:
+                if room_1:
+                    self.page.frame_locator('#contentframe').locator('label.chksel').nth(0).set_checked(True)
+                if room_2:
+                    self.page.frame_locator('#contentframe').locator('label.chksel').nth(1).set_checked(True)
+                if floor == '圖書館4F'and room_3:
+                    self.page.frame_locator('#contentframe').locator('label.chksel').nth(2).set_checked(True)
             
             self.page.frame_locator('#contentframe').locator('input.YYYYMMDD').click()
 
@@ -83,7 +103,7 @@ class IspaceController(QThread):
                 for i in range(diff):
                     self.page.frame_locator('#contentframe').locator('div.nav').locator('a.monthR').click()
             
-            self.page.frame_locator('#contentframe').locator('div.calendar').get_by_title(start_date.toString('yyyy/MM/d'), exact=True).click()#.locator('table.calendar').click()
+            self.page.frame_locator('#contentframe').locator('div.calendar').get_by_title(start_date.toString('yyyy/MM/d'), exact=True).click()
             self.page.frame_locator('#contentframe').locator('input.textNeed').nth(1).clear()
             self.page.frame_locator('#contentframe').locator('input.textNeed').nth(1).fill(suspend_reason)
 
@@ -94,6 +114,8 @@ class IspaceController(QThread):
                 for time in checkedDate_list:
                     self.page.frame_locator('#contentframe').get_by_text(time).click()
                 self.page.frame_locator('#contentframe').locator('div.pagefun').nth(0).get_by_title('新增暫停使用空間').click()
+
+            self.page.frame_locator('#mainframe').get_by_title('空間管理').click()
 
         except:
             pass
